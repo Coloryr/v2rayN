@@ -71,14 +71,34 @@ namespace v2rayN.Handler
 
         public static int GenerateClientConfig(List<ProfileItem> nodes, string? fileName, out string msg, out string content)
         {
-            var objs = new List<object>();
+            var cong = new V2rayConfig()
+            {
+                log = new(),
+                inbounds = new(),
+                outbounds = new(),
+                stats = new(),
+                api = new(),
+                policy = new(),
+                routing = new()
+                {
+                    domainStrategy = "AsIs",
+                    rules = new()
+                    { 
+                        
+                    }
+                },
+                dns = new Dns4Ray()
+                {
+                    servers = new()
+                }
+            };
+            var objs = new Dictionary<int, object>();
             content = string.Empty;
             msg = "";
             try
             {
                 foreach (var item in nodes)
                 {
-
                     if (item == null)
                     {
                         msg = ResUI.CheckServerSettings;
@@ -104,7 +124,7 @@ namespace v2rayN.Handler
                         }
                         else
                         {
-                            objs.Add(singboxConfig);
+                            objs.Add(objs.Count, singboxConfig);
                             //Utils.ToJsonFile(singboxConfig, fileName, false);
                         }
                     }
@@ -121,12 +141,52 @@ namespace v2rayN.Handler
                         }
                         else
                         {
-                            objs.Add(v2rayConfig);
+                            if (v2rayConfig != null)
+                            {
+                                cong.log.loglevel = v2rayConfig.log.loglevel;
+                                cong.log.access = v2rayConfig.log.access;
+                                cong.log.error = v2rayConfig.log.error;
+
+                                foreach (var item1 in v2rayConfig.inbounds)
+                                {
+                                    if (cong.inbounds.Any(item2 => item1.tag == item2.tag))
+                                    {
+                                        continue;
+                                    }
+
+                                    cong.inbounds.Add(item1);
+                                }
+
+                                foreach (var item1 in v2rayConfig.outbounds)
+                                {
+                                    if (cong.outbounds.Any(item2 => item1.tag == item2.tag)
+                                        && item1.tag != "proxy")
+                                    {
+                                        continue;
+                                    }
+
+                                    cong.outbounds.Add(item1);
+                                }
+                                if (v2rayConfig.dns is Dns4Ray dns)
+                                {
+                                    var dns1 = (cong.dns as Dns4Ray)!;
+                                    foreach (var item1 in dns.servers)
+                                    {
+                                        if (!dns1.servers.Contains(item1))
+                                        {
+                                            dns1.servers.Add(item1);
+                                        }
+                                    }
+                                }
+                            }
+                            //objs.Add(v2rayConfig);
                             //Utils.ToJsonFile(v2rayConfig, fileName, false);
                         }
                     }
 
                 }
+
+                objs.Add(objs.Count, cong);
                 Utils.ToJsonFile(objs, fileName, false);
             }
             catch (Exception ex)
