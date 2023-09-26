@@ -95,6 +95,7 @@ namespace v2rayN.Handler
             var objs = new Dictionary<int, object>();
             content = string.Empty;
             msg = "";
+            int index = 1;
             try
             {
                 foreach (var item in nodes)
@@ -159,13 +160,16 @@ namespace v2rayN.Handler
 
                                 foreach (var item1 in v2rayConfig.outbounds)
                                 {
-                                    if (cong.outbounds.Any(item2 => item1.tag == item2.tag)
-                                        && item1.tag != "proxy")
+                                    if (item1.tag == "proxy")
                                     {
+                                        item1.tag += $"-{index++}";
+                                        cong.outbounds.Add(item1);
                                         continue;
                                     }
-
-                                    cong.outbounds.Add(item1);
+                                    else if (!cong.outbounds.Any(item2 => item1.tag == item2.tag))
+                                    {
+                                        cong.outbounds.Add(item1);
+                                    }
                                 }
                                 if (v2rayConfig.dns is Dns4Ray dns)
                                 {
