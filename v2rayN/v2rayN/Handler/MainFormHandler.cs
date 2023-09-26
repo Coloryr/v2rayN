@@ -154,6 +154,44 @@ namespace v2rayN.Handler
             }
         }
 
+        public void Export2ClientConfig(IList<ProfileItem?> items, Config config)
+        {
+            var list = new List<ProfileItem>();
+            foreach (var item in items)
+            {
+                if (item == null || item.configType == EConfigType.Custom)
+                {
+                    continue;
+                }
+
+                list.Add(item);
+            }
+
+            SaveFileDialog fileDialog = new()
+            {
+                Filter = "Config|*.json",
+                FilterIndex = 2,
+                RestoreDirectory = true
+            };
+            if (fileDialog.ShowDialog() != true)
+            {
+                return;
+            }
+            string fileName = fileDialog.FileName;
+            if (Utils.IsNullOrEmpty(fileName))
+            {
+                return;
+            }
+            if (CoreConfigHandler.GenerateClientConfig(list, fileName, out string msg, out string content) != 0)
+            {
+                UI.Show(msg);
+            }
+            else
+            {
+                UI.ShowWarning(string.Format(ResUI.SaveClientConfigurationIn, fileName));
+            }
+        }
+
         public void UpdateTask(Config config, Action<bool, string> update)
         {
             Task.Run(() => UpdateTaskRunSubscription(config, update));

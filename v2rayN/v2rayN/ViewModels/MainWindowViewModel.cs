@@ -1243,6 +1243,17 @@ namespace v2rayN.ViewModels
 
         private void Export2ClientConfig()
         {
+            var items = SelectedProfiles;
+            if(items.Count > 1)
+            {
+                var list = new List<ProfileItem?>();
+                foreach (var item1 in items)
+                {
+                    list.Add(LazyConfig.Instance.GetProfileItem(item1.indexId));
+                }
+                MainFormHandler.Instance.Export2ClientConfig(list, _config);
+                return;
+            }
             var item = LazyConfig.Instance.GetProfileItem(SelectedProfile.indexId);
             if (item is null)
             {

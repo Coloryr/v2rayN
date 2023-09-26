@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using DynamicData;
+using System.IO;
 using v2rayN.Mode;
 using v2rayN.Resx;
 
@@ -58,6 +59,75 @@ namespace v2rayN.Handler
                         Utils.ToJsonFile(v2rayConfig, fileName, false);
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Utils.SaveLog("GenerateClientConfig", ex);
+                msg = ResUI.FailedGenDefaultConfiguration;
+                return -1;
+            }
+            return 0;
+        }
+
+        public static int GenerateClientConfig(List<ProfileItem> nodes, string? fileName, out string msg, out string content)
+        {
+            var objs = new List<object>();
+            content = string.Empty;
+            msg = "";
+            try
+            {
+                foreach (var item in nodes)
+                {
+
+                    if (item == null)
+                    {
+                        msg = ResUI.CheckServerSettings;
+                        return -1;
+                    }
+                    var config = LazyConfig.Instance.GetConfig();
+
+                    msg = ResUI.InitialConfiguration;
+                    if (item.configType == EConfigType.Custom)
+                    {
+                        return GenerateClientCustomConfig(item, fileName, out msg);
+                    }
+                    else if (config.tunModeItem.enableTun || LazyConfig.Instance.GetCoreType(item, item.configType) == ECoreType.sing_box)
+                    {
+                        var configGenSingbox = new CoreConfigSingbox(config);
+                        if (configGenSingbox.GenerateClientConfigContent(item, out SingboxConfig? singboxConfig, out msg) != 0)
+                        {
+                            return -1;
+                        }
+                        if (Utils.IsNullOrEmpty(fileName))
+                        {
+                            content = Utils.ToJson(singboxConfig);
+                        }
+                        else
+                        {
+                            objs.Add(singboxConfig);
+                            //Utils.ToJsonFile(singboxConfig, fileName, false);
+                        }
+                    }
+                    else
+                    {
+                        var coreConfigV2ray = new CoreConfigV2ray(config);
+                        if (coreConfigV2ray.GenerateClientConfigContent(item, out V2rayConfig? v2rayConfig, out msg) != 0)
+                        {
+                            return -1;
+                        }
+                        if (Utils.IsNullOrEmpty(fileName))
+                        {
+                            content = Utils.ToJson(v2rayConfig);
+                        }
+                        else
+                        {
+                            objs.Add(v2rayConfig);
+                            //Utils.ToJsonFile(v2rayConfig, fileName, false);
+                        }
+                    }
+
+                }
+                Utils.ToJsonFile(objs, fileName, false);
             }
             catch (Exception ex)
             {
